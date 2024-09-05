@@ -1,0 +1,27 @@
+[
+    {
+      "fullName": "System Admin",
+      "username": "Admin",
+      "password": "admin1234",
+      "role": "admin",
+      "createdAt": "2024-07-14T19:11:09.000Z",
+      "updatedAt": "2024-07-14T19:11:09.000Z"
+    },
+    {
+      "fullName": "User",
+      "username": "User",
+      "password": "user1234",
+      "role": "customer",
+      "createdAt": "2024-07-14T19:11:09.000Z",
+      "updatedAt": "2024-07-14T19:11:09.000Z"
+    },
+    {
+      "fullName": "User 2",
+      "username": "User2",
+      "password": "User1234",
+      "role": "customer",
+      "createdAt": "2024-07-14T19:11:09.000Z",
+      "updatedAt": "2024-07-14T19:11:09.000Z"
+    }
+  ]
+  
