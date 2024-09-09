@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>DAB - Rent Vehicles</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/stylesheets/styles.css">
+  <script src="/js/common.js"></script>
+</head>
+
+<body>
+  <%- include('./partials/navbar.ejs', { user: user }) %>
+  <div class="container-fluid mt-5">
+    <h2 class="p-3 text-center">Vehicles for Rent</h2>
+    <div class="list-group">
+      <div class="row px-3 py-1 w-100 text-center">
+        <span class="col py-1 bg-light">
+          <button class="btn-sm btn-success" onclick="fetchPopularVehicleTypes()">Popular Vehicle Types</button>
+        </span>
+        <span class="col py-1 bg-light">
+          <button class="btn-sm btn-success" onclick="fetchCurrentlyRentedVehicles()">Currently Rented Vehicles</button>
+        </span>
+        <span class="col py-1 bg-light">
+          <button class="btn-sm btn-success" onclick="fetchVehiclesRequiringService()">Vehicles Requiring Service</button>
+        </span>
+        <span class="col py-1 bg-light">
+          <button class="btn-sm btn-success" onclick="fetchVehiclesWithCruiseControl()">Cruise Control</button>
+        </span>
+        <span class="col py-1 bg-light">
+          <button class="btn-sm btn-warning" onclick="fetchAllVehicles()">All Vehicles</button>
+        </span>
+      </div>
+      <div class="row px-3 py-1 w-100">
+        <span class="col py-1 bg-noroff">Id</span>
+        <span class="col py-1 bg-noroff">Registration No.</span>
+        <span class="col py-1 bg-noroff">Make</span>
+        <span class="col py-1 bg-noroff">Model</span>
+        <span class="col py-1 bg-noroff">Colour</span>
+        <span class="col py-1 bg-noroff">Vehicle Type</span>
+        <span class="col py-1 bg-noroff">Features</span>
+        <span class="col py-1 bg-noroff">Last Service Date</span>
+        <span class="col py-1 bg-noroff">Rented</span>
+        <span class="col py-1 bg-noroff">Serviceable</span>
+        <span class="col py-1 bg-noroff">Options</span>
+      </div>
+      <div id="vehicle-list">
+        <% vehicles.forEach(function(vehicle) { %>
+          <div class="row px-3 py-1 w-100" id="vehicle-<%= vehicle.id %>">
+            <span class="col py-1 bg-light"><%= vehicle.id %></span>
+            <span class="col py-1 bg-light"><%= vehicle.registrationNo %></span>
+            <span class="col py-1 bg-light"><%= vehicle.make %></span>
+            <span class="col py-1 bg-light"><%= vehicle.model %></span>
+            <span class="col py-1 bg-light"><%= vehicle.colour ? vehicle.colour.name : 'N/A' %></span>
+            <span class="col py-1 bg-light"><%= vehicle.type ? vehicle.type.name : 'N/A' %></span>
+            <span class="col py-1 bg-light"><%= vehicle.features %></span>
+            <span class="col py-1 bg-light"><%= new Date(vehicle.lastServiceDate).toISOString().split('T')[0] %></span>
+            <span class="col py-1 bg-light"><%= vehicle.rented ? 'Yes' : 'No' %></span>
+            <span class="col py-1 bg-light"><%= vehicle.serviceable ? 'Yes' : 'No' %></span>
+            <span class="col py-1 bg-light text-center">
+              <% if (!vehicle.rented && !vehicle.serviceable) { %>
+                <button class="btn-sm btn-warning rent-button" onclick="rentVehicle(<%= vehicle.id %>)">Rent</button>
+                <button class="btn-sm btn-danger cancel-button" onclick="cancelRental(<%= vehicle.id %>)" style="display: none;">Cancel Rental</button>
+              <% } else { %>
+                <button class="btn-sm btn-warning rent-button" onclick="rentVehicle(<%= vehicle.id %>)" style="display: none;" disabled>Rent</button>
+                <button class="btn-sm btn-danger cancel-button" onclick="cancelRental(<%= vehicle.id %>)" style="display: <%= vehicle.rented ? 'inline-block' : 'none' %>;">Cancel Rental</button>
+              <% } %>
+              <input type="hidden" id="rental-id-<%= vehicle.id %>" value="<%= vehicle.rentalId %>">
+            </span>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+  <script>
+    function updateVehicleList(vehicles) {
+      const vehicleList = document.getElementById('vehicle-list');
+      vehicleList.innerHTML = vehicles.map(vehicle => `
+        <div class="row px-3 py-1 w-100" id="vehicle-${vehicle.id}">
+          <span class="col py-1 bg-light">${vehicle.id}</span>
+          <span class="col py-1 bg-light">${vehicle.registrationNo}</span>
+          <span class="col py-1 bg-light">${vehicle.make}</span>
+          <span class="col py-1 bg-light">${vehicle.model}</span>
+          <span class="col py-1 bg-light">${vehicle.colour ? vehicle.colour.name : 'N/A'}</span>
+          <span class="col py-1 bg-light">${vehicle.type ? vehicle.type.name : 'N/A'}</span>
+          <span class="col py-1 bg-light">${vehicle.features}</span>
+          <span class="col py-1 bg-light">${new Date(vehicle.lastServiceDate).toISOString().split('T')[0]}</span>
+          <span class="col py-1 bg-light">${vehicle.rented ? 'Yes' : 'No'}</span>
+          <span class="col py-1 bg-light">${vehicle.serviceable ? 'Yes' : 'No'}</span>
+          <span class="col py-1 bg-light text-center">
+            <button class="btn-sm btn-warning rent-button" onclick="rentVehicle(${vehicle.id})" style="display: ${vehicle.rented || vehicle.serviceable ? 'none' : 'inline-block'}">Rent</button>
+            <button class="btn-sm btn-danger cancel-button" onclick="cancelRental(${vehicle.id})" style="display: ${vehicle.rented ? 'inline-block' : 'none'}">Cancel Rental</button>
+            <input type="hidden" id="rental-id-${vehicle.id}" value="${vehicle.rentalId}">
+          </span>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+
+</html>
