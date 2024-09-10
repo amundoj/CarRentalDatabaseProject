@@ -48,6 +48,11 @@ resetAndSyncDatabase().then(() => {
   app.use('/colours', coloursRouter);
   app.use('/types', typesRouter);
 
+  var PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+
   // catch 404 and forward to error handler
   app.use(function (req, res, next) {
     next(createError(404));
