@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { Vehicle, VehicleType, VehicleColour, Rental, User } = require('../models');
 const { ensureAuthenticated, ensureAdminOrCustomer, ensureCustomer, ensureAdmin } = require('../middleware/auth');
 
+// Helper function to determine if a vehicle is serviceable (i.e., last serviced over 6 months ago)
 function isServiceable(lastServiceDate) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -20,7 +21,7 @@ router.get('/', ensureAuthenticated, ensureAdminOrCustomer, async (req, res) => 
       ]
     });
 
-    // Add serviceable status
+    // Add serviceable status to each vehicle
     const vehiclesWithServiceStatus = vehicles.map(vehicle => ({
       ...vehicle.toJSON(),
       serviceable: isServiceable(vehicle.lastServiceDate)
@@ -32,6 +33,7 @@ router.get('/', ensureAuthenticated, ensureAdminOrCustomer, async (req, res) => 
     res.status(500).send('Internal Server Error');
   }
 });
+
 // Rent a vehicle
 router.post('/rent', ensureAuthenticated, ensureCustomer, async function (req, res, next) {
   try {
@@ -49,6 +51,7 @@ router.post('/rent', ensureAuthenticated, ensureCustomer, async function (req, r
       return res.status(400).json({ error: 'Vehicle not available for rent' });
     }
 
+    // Create the rental and update vehicle status
     await Rental.create({ userId: userId, vehicleId: vehicleId, rentalDate: new Date() });
     await vehicle.update({ rented: true });
 
@@ -68,6 +71,7 @@ router.post('/cancel-rental', ensureAuthenticated, ensureAdmin, async function (
       return res.status(400).json({ error: 'Rental not found' });
     }
 
+    // Cancel the rental and update vehicle status
     await rental.destroy();
     await Vehicle.update({ rented: false }, { where: { id: vehicleId } });
 
@@ -105,11 +109,7 @@ router.get('/rented', ensureAuthenticated, ensureAdminOrCustomer, async function
       serviceable: isServiceable(rental.Vehicle.lastServiceDate)
     }));
 
-    if (req.headers['accept'].includes('application/json')) {
-      res.json({ vehicles });
-    } else {
-      res.render('vehicles', { user: req.user, vehicles });
-    }
+    res.render('vehicles', { user: req.user, vehicles });
   } catch (err) {
     console.error('Error fetching rented vehicles:', err);
     next(err);
@@ -137,26 +137,22 @@ router.get('/service', ensureAuthenticated, ensureAdmin, async function (req, re
       serviceable: isServiceable(vehicle.lastServiceDate)
     }));
 
-    if (req.headers['accept'].includes('application/json')) {
-      res.json({ vehicles: serviceableVehicles });
-    } else {
-      res.render('vehicles', { user: req.user, vehicles: serviceableVehicles });
-    }
+    res.render('vehicles', { user: req.user, vehicles: serviceableVehicles });
   } catch (err) {
     console.error('Error fetching vehicles for service:', err);
     next(err);
   }
 });
 
-// Fetch popular vehicle types (SUV)
+// Fetch popular vehicle types (SUVs)
 router.get('/popular', ensureAuthenticated, ensureAdminOrCustomer, async function (req, res, next) {
   try {
     const vehicles = await Vehicle.findAll({
+      where: { vehicleTypeId: 2 }, // Assuming 2 represents SUVs
       include: [
         { model: VehicleType, as: 'type' },
         { model: VehicleColour, as: 'colour' }
-      ],
-      where: { vehicleTypeId: 2 }
+      ]
     });
 
     const popularVehicles = vehicles.map(vehicle => ({
@@ -164,13 +160,9 @@ router.get('/popular', ensureAuthenticated, ensureAdminOrCustomer, async functio
       serviceable: isServiceable(vehicle.lastServiceDate)
     }));
 
-    if (req.headers['accept'].includes('application/json')) {
-      res.json({ vehicles: popularVehicles });
-    } else {
-      res.render('vehicles', { user: req.user, vehicles: popularVehicles });
-    }
+    res.render('vehicles', { user: req.user, vehicles: popularVehicles });
   } catch (err) {
-    console.error('Error fetching popular vehicle types:', err);
+    console.error('Error fetching popular vehicles:', err);
     next(err);
   }
 });
@@ -185,15 +177,13 @@ router.get('/cruise-control', ensureAuthenticated, ensureAdminOrCustomer, async 
         { model: VehicleColour, as: 'colour' }
       ]
     });
+
     const cruiseControlVehicles = vehicles.map(vehicle => ({
       ...vehicle.toJSON(),
       serviceable: isServiceable(vehicle.lastServiceDate)
     }));
-    if (req.headers['accept'].includes('application/json')) {
-      res.json({ vehicles: cruiseControlVehicles });
-    } else {
-      res.render('vehicles', { user: req.user, vehicles: cruiseControlVehicles });
-    }
+
+    res.render('vehicles', { user: req.user, vehicles: cruiseControlVehicles });
   } catch (err) {
     console.error('Error fetching vehicles with cruise control:', err);
     next(err);
