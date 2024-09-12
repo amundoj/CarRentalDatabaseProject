@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
 const VehicleType = require('../models/vehicleType');
-const Vehicle = require('../models/vehicle');
 
 // Get all vehicle types
 router.get('/', ensureAuthenticated, ensureAdmin, async function (req, res, next) {
@@ -54,6 +53,7 @@ router.post('/delete/:id', ensureAuthenticated, ensureAdmin, async function (req
       res.status(404).send('Vehicle type not found');
     }
   } catch (err) {
+    // Handle foreign key constraint errors
     if (err.name === 'SequelizeForeignKeyConstraintError') {
       console.error('Cannot delete or update vehicle type:', err);
       const types = await VehicleType.findAll();
