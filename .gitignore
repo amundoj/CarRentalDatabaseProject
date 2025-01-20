@@ -1,3 +1,30 @@
-node_modules/
+# Environment variables
 .env
+
+# Node dependencies
+node_modules/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database-related files
+*.sqlite
+*.db
+*.sql
+
+# npm debug files
+npm-debug.log*
+
+# IDE-specific files
+.idea/
+.vscode/
+
+# Misc
+*.bak
+*.tmp
 package-lock.json
