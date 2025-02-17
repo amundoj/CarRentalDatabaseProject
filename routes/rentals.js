@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const Rental = require('../models/rental.js');
+const Rental = require('../models/rental');
 const Vehicle = require('../models/vehicle');
 const { ensureAuthenticated, ensureCustomer } = require('../middleware/auth');
 
@@ -21,14 +21,15 @@ router.post('/rent', ensureAuthenticated, ensureCustomer, async function (req, r
     await Rental.create({ userId: req.user.id, vehicleId: vehicleId });
 
     // Mark the vehicle as rented
-    await vehicle.update({ rented: true });
+    await vehicle.update({ rented: true, lastRented: new Date() });
 
     // Respond with success message
     res.status(200).json({ message: 'Vehicle rented successfully' });
-  } catch (err) {
-    // Handle any errors by passing them to the next middleware
-    next(err);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while processing your request.' });
   }
 });
+
 
 module.exports = router;
