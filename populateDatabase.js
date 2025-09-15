@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const sequelize = require('./config/database');
 const VehicleColour = require('./models/vehicleColour');
 const VehicleType = require('./models/vehicleType');
@@ -25,6 +26,7 @@ async function populateDatabase() {
     // Populate Users with check for duplicates
     const usersData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'users.json'), 'utf8'));
     for (const userData of usersData) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
       const [user, created] = await User.findOrCreate({
         where: { username: userData.username },
         defaults: userData
