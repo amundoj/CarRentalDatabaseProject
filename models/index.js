@@ -26,6 +26,9 @@ Rental.belongsTo(User, { foreignKey: 'userId' });
 // A user can have many rentals
 User.hasMany(Rental, { foreignKey: 'userId' });
 
+// A vehicle can have many rentals
+Vehicle.hasMany(Rental, { foreignKey: 'vehicleId' });
+
 // Export all models and the sequelize instance for use elsewhere
 module.exports = {
   sequelize,
