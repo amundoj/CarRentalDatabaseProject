@@ -1,0 +1,38 @@
+<%- include('partials/header') %>  <!-- Anta du har partials -->
+<h1>Your Rentals</h1>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Vehicle</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% rentals.forEach(rental => { %>
+      <tr>
+        <td><%= rental.Vehicle.make %> <%= rental.Vehicle.model %></td>
+        <td><%= rental.startDate %></td>
+        <td><%= rental.endDate || 'Ongoing' %></td>
+        <td><%= rental.status %></td>
+        <td>
+          <% if (rental.status === 'active' && user.role === 'admin') { %>
+            <button onclick="completeRental(<%= rental.id %>)">Complete</button>
+          <% } %>
+          <button onclick="cancelRental(<%= rental.id %>)">Cancel</button>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<script>
+  function completeRental(id) {
+    fetch(`/rentals/${id}`, { method: 'PUT' }).then(() => location.reload());
+  }
+  function cancelRental(id) {
+    fetch(`/rentals/${id}`, { method: 'DELETE' }).then(() => location.reload());
+  }
+</script>
+<%- include('partials/footer') %>
