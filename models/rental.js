@@ -12,21 +12,25 @@ const Rental = sequelize.define('Rental', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    references: {
-      model: User,
-      key: 'id'
-    }
+    references: { model: User, key: 'id' }
   },
   vehicleId: {
     type: DataTypes.INTEGER,
-    references: {
-      model: Vehicle,
-      key: 'id'
-    }
+    references: { model: Vehicle, key: 'id' }
   },
-  rentalDate: {
+  startDate: {  // Ny: Startdato
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  endDate: {  // Ny: Sluttdato (kan være null hvis pågående)
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  status: {  // Ny: 'pending', 'active', 'completed', 'cancelled'
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'active'
   }
 }, {
   // Enable timestamps to automatically manage 'createdAt' and 'updatedAt' fields
