@@ -14,6 +14,7 @@ var vehiclesRouter = require('./routes/vehicles');
 var coloursRouter = require('./routes/colours');
 var typesRouter = require('./routes/types');
 var authRouter = require('./routes/auth');
+var rentalRouter = require('./routes/rentals');
 
 var app = express();
 
@@ -51,6 +52,7 @@ resetAndSyncDatabase().then(() => {
   app.use('/vehicles', vehiclesRouter);
   app.use('/colours', coloursRouter);
   app.use('/types', typesRouter);
+  app.use('/rentals', rentalRouter);
 
   // Set the port
   var PORT = process.env.PORT || 3000;
