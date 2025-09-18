@@ -2,34 +2,72 @@ var express = require('express');
 var router = express.Router();
 const Rental = require('../models/rental');
 const Vehicle = require('../models/vehicle');
-const { ensureAuthenticated, ensureCustomer } = require('../middleware/auth');
+const { ensureAuthenticated, ensureCustomer, ensureAdmin } = require('../middleware/auth');
 
-// POST route to rent a vehicle
-router.post('/rent', ensureAuthenticated, ensureCustomer, async function (req, res, next) {
+// GET: List rentals (admin ser alle, customer ser sine)
+router.get('/', ensureAuthenticated, async (req, res, next) => {
   try {
-    const vehicleId = req.body.vehicleId;
-
-    // Find the vehicle by its ID
-    const vehicle = await Vehicle.findByPk(vehicleId);
-
-    // Check if the vehicle exists and is available for rent
-    if (!vehicle || vehicle.rented) {
-      return res.status(400).json({ error: 'Vehicle not available for rent' });
+    let rentals;
+    if (req.user.role === 'admin') {
+      rentals = await Rental.findAll({ include: [User, Vehicle] });
+    } else {
+      rentals = await Rental.findAll({ where: { userId: req.user.id }, include: Vehicle });
     }
-
-    // Create a new rental record
-    await Rental.create({ userId: req.user.id, vehicleId: vehicleId });
-
-    // Mark the vehicle as rented
-    await vehicle.update({ rented: true, lastRented: new Date() });
-
-    // Respond with success message
-    res.status(200).json({ message: 'Vehicle rented successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred while processing your request.' });
+    res.render('rentals', { rentals, user: req.user });  // Lag views/rentals.ejs
+  } catch (err) {
+    next(err);
   }
 });
 
+// POST: Create rental (rent vehicle)
+router.post('/', ensureAuthenticated, ensureCustomer, async (req, res, next) => {
+  try {
+    const { vehicleId, endDate } = req.body;  // Legg til endDate fra form
+    const existingRental = await Rental.findOne({ where: { userId: req.user.id, status: 'active' } });
+    if (existingRental) return res.status(400).json({ error: 'You already have an active rental' });
+
+    const vehicle = await Vehicle.findByPk(vehicleId);
+    if (!vehicle || vehicle.rented) return res.status(400).json({ error: 'Vehicle not available' });
+
+    const rental = await Rental.create({ userId: req.user.id, vehicleId, endDate, status: 'active' });
+    await vehicle.update({ rented: true });
+
+    res.json({ message: 'Rental created successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT: Update rental (e.g., return vehicle)
+router.put('/:id', ensureAuthenticated, ensureAdmin, async (req, res, next) => {  // Admin only for return
+  try {
+    const rental = await Rental.findByPk(req.params.id);
+    if (!rental) return res.status(404).json({ error: 'Rental not found' });
+
+    await rental.update({ endDate: new Date(), status: 'completed' });
+    await Vehicle.update({ rented: false }, { where: { id: rental.vehicleId } });
+
+    res.json({ message: 'Rental completed' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE: Cancel rental
+router.delete('/:id', ensureAuthenticated, async (req, res, next) => {
+  try {
+    const rental = await Rental.findByPk(req.params.id);
+    if (!rental || (req.user.role !== 'admin' && rental.userId !== req.user.id)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await rental.update({ status: 'cancelled' });  // Soft delete
+    await Vehicle.update({ rented: false }, { where: { id: rental.vehicleId } });
+
+    res.json({ message: 'Rental cancelled' });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
