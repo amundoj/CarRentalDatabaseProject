@@ -1,66 +1,59 @@
-// Function to rent a vehicle by vehicleId
-function rentVehicle(vehicleId) {
-  fetch('/vehicles/rent', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ vehicleId: vehicleId })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.message) {
-      alert(data.message);
-      window.location.reload(); // Reload the page after successful rental
+// Rent a vehicle
+async function rentVehicle(vehicleId) {
+  try {
+    const endDate = prompt("Enter end date (YYYY-MM-DD):");
+    if (!endDate) return;
+
+    const res = await fetch(`/rentals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vehicleId, endDate })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('Vehicle rented successfully!');
+      window.location.reload();
     } else {
-      alert(data.error); // Display an error message if something went wrong
+      alert(data.error || 'Failed to rent vehicle');
     }
-  })
-  .catch(error => console.error('Error:', error)); // Log any errors in the console
+  } catch (err) {
+    console.error(err);
+    alert('Error renting vehicle');
+  }
 }
 
-// Function to cancel a rental by vehicleId
-function cancelRental(vehicleId) {
-  fetch('/vehicles/cancel-rental', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ vehicleId: vehicleId })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.message) {
-      alert(data.message);
-      window.location.reload(); // Reload the page after successful cancellation
+// Cancel a rental
+async function cancelRental(vehicleId) {
+  const rentalId = document.getElementById(`rental-id-${vehicleId}`).value;
+  if (!rentalId) {
+    alert('No rental found');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to cancel this rental?')) return;
+
+  try {
+    const res = await fetch(`/rentals/${rentalId}`, {
+      method: 'DELETE'
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('Rental cancelled successfully!');
+      window.location.reload();
     } else {
-      alert(data.error); // Display an error message if something went wrong
+      alert(data.error || 'Failed to cancel rental');
     }
-  })
-  .catch(error => console.error('Error:', error)); // Log any errors in the console
+  } catch (err) {
+    console.error(err);
+    alert('Error cancelling rental');
+  }
 }
 
-// Function to fetch popular vehicle types
-function fetchPopularVehicleTypes() {
-  window.location.href = '/vehicles/popular'; // Redirect to the popular vehicles page
-}
-
-// Function to fetch currently rented vehicles
-function fetchCurrentlyRentedVehicles() {
-  window.location.href = '/vehicles/rented'; // Redirect to the rented vehicles page
-}
-
-// Function to fetch vehicles requiring service
-function fetchVehiclesRequiringService() {
-  window.location.href = '/vehicles/service'; // Redirect to the vehicles requiring service page
-}
-
-// Function to fetch vehicles with cruise control
-function fetchVehiclesWithCruiseControl() {
-  window.location.href = '/vehicles/cruise-control'; // Redirect to the vehicles with cruise control page
-}
-
-// Function to fetch all vehicles
-function fetchAllVehicles() {
-  window.location.href = '/vehicles'; // Redirect to the all vehicles page
-}
+// Navigation shortcuts
+function goToPopular() { window.location.href = '/vehicles/popular'; }
+function goToRented() { window.location.href = '/vehicles/rented'; }
+function goToService() { window.location.href = '/vehicles/service'; }
+function goToCruise() { window.location.href = '/vehicles/cruise-control'; }
+function goToAll() { window.location.href = '/vehicles'; }
