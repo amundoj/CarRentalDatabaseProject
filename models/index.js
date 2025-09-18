@@ -13,8 +13,6 @@ const VehicleType = require('./vehicleType');
 const Rental = require('./rental');
 const User = require('./user');
 
-// Define relationships between models
-
 // Vehicle belongs to a specific colour and type
 Vehicle.belongsTo(VehicleColour, { as: 'colour', foreignKey: 'colourId' });
 Vehicle.belongsTo(VehicleType, { as: 'type', foreignKey: 'vehicleTypeId' });
@@ -23,11 +21,11 @@ Vehicle.belongsTo(VehicleType, { as: 'type', foreignKey: 'vehicleTypeId' });
 Rental.belongsTo(Vehicle, { foreignKey: 'vehicleId' });
 Rental.belongsTo(User, { foreignKey: 'userId' });
 
-// A user can have many rentals
-User.hasMany(Rental, { foreignKey: 'userId' });
-
 // A vehicle can have many rentals
 Vehicle.hasMany(Rental, { foreignKey: 'vehicleId' });
+
+// A user can have many rentals
+User.hasMany(Rental, { foreignKey: 'userId' });
 
 // Export all models and the sequelize instance for use elsewhere
 module.exports = {
