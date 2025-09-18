@@ -14,7 +14,7 @@ var vehiclesRouter = require('./routes/vehicles');
 var coloursRouter = require('./routes/colours');
 var typesRouter = require('./routes/types');
 var authRouter = require('./routes/auth');
-var rentalRouter = require('./routes/rentals');
+var rentalsRouter = require('./routes/rentals');
 
 var app = express();
 
@@ -43,6 +43,8 @@ resetAndSyncDatabase().then(() => {
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(session({ secret: 'your secret key', resave: false, saveUninitialized: false }));
+  const flash = require('connect-flash');
+  app.use(flash());
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -52,7 +54,7 @@ resetAndSyncDatabase().then(() => {
   app.use('/vehicles', vehiclesRouter);
   app.use('/colours', coloursRouter);
   app.use('/types', typesRouter);
-  app.use('/rentals', rentalRouter);
+  app.use('/rentals', rentalsRouter);
 
   // Set the port
   var PORT = process.env.PORT || 3000;
