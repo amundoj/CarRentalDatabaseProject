@@ -4,26 +4,23 @@ const bcrypt = require('bcrypt');
 const { User } = require('../models');
 
 passport.use(new LocalStrategy(
-  function(username, password, done) {
+  function (username, password, done) {
     User.findOne({ where: { username: username } })
       .then(user => {
         if (!user) {
-          console.log('Found user:', user.username, 'DB hash length:', user.password.length, 'DB hash:', user.password): // Should show ~60 chars and full hash
-          console.log('Input password:', password); // Check if input matches JSON
-          bcrypt.compare(password, user.password, (err, isMatch) => {
-            console.log('Compare result:', isMatch, 'Error:', err); // Log check
-            if (err) throw err;
-            if (isMatch) {
-              console.log('User authenticated');
-              return done(null, user);
-            } else {
-              return done(null, false, { message: 'Incorrect password.' });
-            }
-          });
+          // User not found
+          console.log('User not found:', username);
           return done(null, false, { message: 'Incorrect username.' });
         }
+
+        // Found user, log details
+        console.log('Found user:', user.username, 'DB hash length:', user.password.length, 'DB hash:', user.password); // Should show ~60 chars and full hash
+        
+
+        // Compare input password with stored hash
         bcrypt.compare(password, user.password, (err, isMatch) => {
-          if (err) throw err;
+          console.log('Compare result:', isMatch, 'Error:', err); // Log check
+          if (err) return done(err);
           if (isMatch) {
             console.log('User authenticated');
             return done(null, user);
@@ -36,12 +33,12 @@ passport.use(new LocalStrategy(
   }
 ));
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
   console.log('Serializing user:', user.id);
   done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
+passport.deserializeUser(function (id, done) {
   User.findByPk(id)
     .then(user => done(null, user))
     .catch(err => done(err));
