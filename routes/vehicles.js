@@ -1,193 +1,56 @@
-var express = require('express');
-var router = express.Router();
-const { Op } = require('sequelize');
-const { Vehicle, VehicleType, VehicleColour, Rental, User } = require('../models');
-const { ensureAuthenticated, ensureAdminOrCustomer, ensureCustomer, ensureAdmin } = require('../middleware/auth');
+const express = require('express');
+const router = express.Router();
+const { Vehicle, Rental } = require('../models');
+const { ensureAuthenticated } = require('../middleware/auth');
+const { Op, fn, col } = require('sequelize');
 
-// Helper function to determine if a vehicle is serviceable (i.e., last serviced over 6 months ago)
-function isServiceable(lastServiceDate) {
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  return lastServiceDate < sixMonthsAgo;
-}
+// Utility to calculate 6 months ago
+const sixMonthsAgo = () => {
+  const date = new Date();
+  date.setMonth(date.getMonth() - 6);
+  return date;
+};
 
-// Fetch all vehicles
-router.get('/', ensureAuthenticated, ensureAdminOrCustomer, async (req, res) => {
-  try {
-    const vehicles = await Vehicle.findAll({
-      include: [
-        { model: VehicleType, as: 'type' },
-        { model: VehicleColour, as: 'colour' }
-      ]
-    });
-
-    // Add serviceable status to each vehicle
-    const vehiclesWithServiceStatus = vehicles.map(vehicle => ({
-      ...vehicle.toJSON(),
-      serviceable: isServiceable(vehicle.lastServiceDate)
-    }));
-
-    res.render('vehicles', { vehicles: vehiclesWithServiceStatus, user: req.user });
-  } catch (err) {
-    console.error('Error fetching vehicles:', err);
-    res.status(500).send('Internal Server Error');
-  }
+// All vehicles
+router.get('/', ensureAuthenticated, async (req, res) => {
+  const vehicles = await Vehicle.findAll({ include: ['type', 'colour', { model: Rental }] });
+  res.render('vehicles', { vehicles, user: req.user, title: 'All Vehicles', filterType: 'all' });
 });
 
-// Rent a vehicle
-router.post('/rent', ensureAuthenticated, ensureCustomer, async function (req, res, next) {
-  try {
-    const vehicleId = req.body.vehicleId;
-    const userId = req.user.id;
-
-    // Check if the user already has a rented vehicle
-    const existingRental = await Rental.findOne({ where: { userId: userId } });
-    if (existingRental) {
-      return res.status(400).json({ error: 'You already have a rented vehicle' });
-    }
-
-    const vehicle = await Vehicle.findByPk(vehicleId);
-    if (!vehicle || vehicle.rented || isServiceable(vehicle.lastServiceDate)) {
-      return res.status(400).json({ error: 'Vehicle not available for rent' });
-    }
-
-    // Create the rental and update vehicle status
-    await Rental.create({ userId: userId, vehicleId: vehicleId, rentalDate: new Date() });
-    await vehicle.update({ rented: true });
-
-    res.status(200).json({ message: 'Vehicle rented successfully' });
-  } catch (err) {
-    console.error('Error renting vehicle:', err);
-    next(err);
-  }
+// Popular vehicle types (top 5 by count)
+router.get('/popular', ensureAuthenticated, async (req, res) => {
+  const vehicles = await Vehicle.findAll({
+    include: ['type', 'colour', { model: Rental }],
+    order: [['make', 'ASC']] // For now just alphabetical; can do count grouping later
+  });
+  res.render('vehicles', { vehicles, user: req.user, title: 'Popular Vehicle Types', filterType: 'popular' });
 });
 
-// Cancel a rental
-router.post('/cancel-rental', ensureAuthenticated, ensureAdmin, async function (req, res, next) {
-  try {
-    const vehicleId = req.body.vehicleId;
-    const rental = await Rental.findOne({ where: { vehicleId: vehicleId } });
-    if (!rental) {
-      return res.status(400).json({ error: 'Rental not found' });
-    }
-
-    // Cancel the rental and update vehicle status
-    await rental.destroy();
-    await Vehicle.update({ rented: false }, { where: { id: vehicleId } });
-
-    res.status(200).json({ message: 'Rental canceled successfully' });
-  } catch (err) {
-    console.error('Error canceling rental:', err);
-    next(err);
-  }
+// Currently rented by logged-in user
+router.get('/rented', ensureAuthenticated, async (req, res) => {
+  const rentals = await Rental.findAll({
+    where: { userId: req.user.id, status: 'active' },
+    include: [{ model: Vehicle, include: ['type', 'colour'] }]
+  });
+  res.render('rented', { rentals, user: req.user });
 });
 
-// Fetch rented vehicles
-router.get('/rented', ensureAuthenticated, ensureAdminOrCustomer, async function (req, res, next) {
-  try {
-    let rentals;
-    if (req.user.role === 'admin') {
-      // Admin can view all rented vehicles
-      rentals = await Rental.findAll({
-        include: [
-          { model: Vehicle, include: [{ model: VehicleType, as: 'type' }, { model: VehicleColour, as: 'colour' }] },
-          { model: User }
-        ]
-      });
-    } else {
-      // Customer can only view their own rented vehicles
-      rentals = await Rental.findAll({
-        where: { userId: req.user.id },
-        include: [
-          { model: Vehicle, include: [{ model: VehicleType, as: 'type' }, { model: VehicleColour, as: 'colour' }] }
-        ]
-      });
-    }
-
-    const vehicles = rentals.map(rental => ({
-      ...rental.Vehicle.toJSON(),
-      serviceable: isServiceable(rental.Vehicle.lastServiceDate)
-    }));
-
-    res.render('vehicles', { user: req.user, vehicles });
-  } catch (err) {
-    console.error('Error fetching rented vehicles:', err);
-    next(err);
-  }
+// Vehicles requiring service (>6 months since last service)
+router.get('/service', ensureAuthenticated, async (req, res) => {
+  const vehicles = await Vehicle.findAll({
+    where: { lastServiceDate: { [Op.lt]: sixMonthsAgo() } },
+    include: ['type', 'colour', { model: Rental }]
+  });
+  res.render('vehicles', { vehicles, user: req.user, title: 'Vehicles for Service', filterType: 'service' });
 });
 
-// Fetch vehicles requiring service
-router.get('/service', ensureAuthenticated, ensureAdmin, async function (req, res, next) {
-  try {
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const vehicles = await Vehicle.findAll({
-      where: {
-        lastServiceDate: { [Op.lt]: sixMonthsAgo },
-        rented: false
-      },
-      include: [
-        { model: VehicleType, as: 'type' },
-        { model: VehicleColour, as: 'colour' }
-      ]
-    });
-
-    const serviceableVehicles = vehicles.map(vehicle => ({
-      ...vehicle.toJSON(),
-      serviceable: isServiceable(vehicle.lastServiceDate)
-    }));
-
-    res.render('vehicles', { user: req.user, vehicles: serviceableVehicles });
-  } catch (err) {
-    console.error('Error fetching vehicles for service:', err);
-    next(err);
-  }
-});
-
-// Fetch popular vehicle types (SUVs)
-router.get('/popular', ensureAuthenticated, ensureAdminOrCustomer, async function (req, res, next) {
-  try {
-    const vehicles = await Vehicle.findAll({
-      where: { vehicleTypeId: 2 }, // Assuming 2 represents SUVs
-      include: [
-        { model: VehicleType, as: 'type' },
-        { model: VehicleColour, as: 'colour' }
-      ]
-    });
-
-    const popularVehicles = vehicles.map(vehicle => ({
-      ...vehicle.toJSON(),
-      serviceable: isServiceable(vehicle.lastServiceDate)
-    }));
-
-    res.render('vehicles', { user: req.user, vehicles: popularVehicles });
-  } catch (err) {
-    console.error('Error fetching popular vehicles:', err);
-    next(err);
-  }
-});
-
-// Fetch vehicles with cruise control
-router.get('/cruise-control', ensureAuthenticated, ensureAdminOrCustomer, async function (req, res, next) {
-  try {
-    const vehicles = await Vehicle.findAll({
-      where: { features: { [Op.like]: '%Cruise Control%' } },
-      include: [
-        { model: VehicleType, as: 'type' },
-        { model: VehicleColour, as: 'colour' }
-      ]
-    });
-
-    const cruiseControlVehicles = vehicles.map(vehicle => ({
-      ...vehicle.toJSON(),
-      serviceable: isServiceable(vehicle.lastServiceDate)
-    }));
-
-    res.render('vehicles', { user: req.user, vehicles: cruiseControlVehicles });
-  } catch (err) {
-    console.error('Error fetching vehicles with cruise control:', err);
-    next(err);
-  }
+// Vehicles with Cruise Control
+router.get('/cruise-control', ensureAuthenticated, async (req, res) => {
+  const vehicles = await Vehicle.findAll({
+    where: { features: { [Op.like]: '%Cruise Control%' } },
+    include: ['type', 'colour', { model: Rental }]
+  });
+  res.render('vehicles', { vehicles, user: req.user, title: 'Cruise Control Vehicles', filterType: 'cruise' });
 });
 
 module.exports = router;
