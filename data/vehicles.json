@@ -6,7 +6,7 @@
       "colourId": 4,
       "vehicleTypeId": 4,
       "features": "Heated seats, Cruise control",
-      "lastServiceDate": "2024-05-12T00:00:00.000Z",
+      "lastServiceDate": "2025-05-12T00:00:00.000Z",
       "rented": false
     },
     {
@@ -16,7 +16,7 @@
       "colourId": 5,
       "vehicleTypeId": 4,
       "features": "Cruise control",
-      "lastServiceDate": "2024-04-10T00:00:00.000Z",
+      "lastServiceDate": "2025-04-10T00:00:00.000Z",
       "rented": false
     },
     {
@@ -26,7 +26,7 @@
       "colourId": 5,
       "vehicleTypeId": 1,
       "features": "Reverse camera, Lane-keep assist",
-      "lastServiceDate": "2024-06-05T00:00:00.000Z",
+      "lastServiceDate": "2025-06-05T00:00:00.000Z",
       "rented": false
     },
     {
@@ -36,7 +36,7 @@
       "colourId": 2,
       "vehicleTypeId": 1,
       "features": "Auto parking, Remote start",
-      "lastServiceDate": "2023-11-28T00:00:00.000Z",
+      "lastServiceDate": "2025-11-28T00:00:00.000Z",
       "rented": false
     },
     {
@@ -46,7 +46,7 @@
       "colourId": 6,
       "vehicleTypeId": 1,
       "features": "Heated seats",
-      "lastServiceDate": "2024-04-10T00:00:00.000Z",
+      "lastServiceDate": "2025-04-10T00:00:00.000Z",
       "rented": false
     },
     {
@@ -56,7 +56,7 @@
       "colourId": 5,
       "vehicleTypeId": 2,
       "features": "Lane-keep assist, Cruise control",
-      "lastServiceDate": "2024-04-10T00:00:00.000Z",
+      "lastServiceDate": "2025-04-10T00:00:00.000Z",
       "rented": false
     },
     {
@@ -66,7 +66,7 @@
       "colourId": 3,
       "vehicleTypeId": 4,
       "features": "Quick charge",
-      "lastServiceDate": "2024-05-15T00:00:00.000Z",
+      "lastServiceDate": "2025-05-15T00:00:00.000Z",
       "rented": false
     },
     {
@@ -76,7 +76,7 @@
       "colourId": 1,
       "vehicleTypeId": 4,
       "features": "Cruise control, Reverse Camera",
-      "lastServiceDate": "2024-06-10T00:00:00.000Z",
+      "lastServiceDate": "2025-06-10T00:00:00.000Z",
       "rented": false
     },
     {
@@ -86,7 +86,7 @@
       "colourId": 2,
       "vehicleTypeId": 4,
       "features": "Cruise control",
-      "lastServiceDate": "2024-06-05T00:00:00.000Z",
+      "lastServiceDate": "2025-06-05T00:00:00.000Z",
       "rented": false
     },
     {
@@ -96,7 +96,7 @@
       "colourId": 5,
       "vehicleTypeId": 1,
       "features": "Reverse camera, Heated seats",
-      "lastServiceDate": "2024-02-28T00:00:00.000Z",
+      "lastServiceDate": "2025-02-28T00:00:00.000Z",
       "rented": false
     },
     {
@@ -106,7 +106,7 @@
       "colourId": 4,
       "vehicleTypeId": 1,
       "features": "Auto parking, Heated steering wheel",
-      "lastServiceDate": "2024-03-12T00:00:00.000Z",
+      "lastServiceDate": "2025-03-12T00:00:00.000Z",
       "rented": false
     },
     {
@@ -116,7 +116,7 @@
       "colourId": 7,
       "vehicleTypeId": 2,
       "features": "Remote start",
-      "lastServiceDate": "2024-01-31T00:00:00.000Z",
+      "lastServiceDate": "2025-01-31T00:00:00.000Z",
       "rented": false
     }
   ]
