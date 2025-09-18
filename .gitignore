@@ -16,6 +16,7 @@ logs/
 *.sqlite
 *.db
 *.sql
+config/config.json
 
 # npm debug files
 npm-debug.log*
